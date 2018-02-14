@@ -190,7 +190,7 @@ router.post('/:group/transactions',auth, permit, function(req, res, next){
     const transaction = new Transaction({
         name: req.body.transaction.name,
         payments: req.body.transaction.payments,
-        type: "general" //type has been set to general for now
+        type: req.body.transaction.type //type has been set to general for now
     });
 
     transaction.save().then(function(transaction){
