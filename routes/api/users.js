@@ -108,8 +108,8 @@ router.post('/forgot', function(req, res, next) {
             var smtpTransport = nodemailer.createTransport({
                 service: 'Gmail',
                 auth: {
-                    user: 'karasavm@gmail.com',
-                    pass: 'averelgr'
+                    user: '',
+                    pass: ''
                 }
 
             });
@@ -163,8 +163,8 @@ router.post('/reset/:token', function(req, res) {
             var smtpTransport = nodemailer.createTransport({
                 service: 'Gmail',
                 auth: {
-                    user: 'karasavm@gmail.com',
-                    pass: 'averelgr'
+                    user: '',
+                    pass: ''
                 }
 
             });
@@ -211,14 +211,14 @@ router.post('/reset/:token', function(req, res) {
 //                 var smtpTransport = nodemailer.createTransport({
 //                     service: 'Gmail',
 //                     auth: {
-//                         user: 'karasavm@gmail.com',
-//                         pass: 'averelgr'
+//                         user: '',
+//                         pass: ''
 //                     }
 //
 //                 });
 //                 var mailOptions = {
-//                     to: 'karasavm@gmail.com',
-//                     from: 'karasavm@gmail.com',
+//                     to: '',
+//                     from: '',
 //                     subject: 'Kraken Account Password Reset',
 //                     text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
 //                     'Reset Token:        ----------- '+ user.resetPasswordToken +'  ----------- \n\n' +
