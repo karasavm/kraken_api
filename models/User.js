@@ -15,7 +15,10 @@ var UserSchema = new mongoose.Schema({
     //favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Article' }],
     //following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     hash: String,
-    salt: String
+    salt: String,
+
+    resetPasswordToken: String,
+    resetPasswordExpires: Date
 }, {timestamps: true});
 
 UserSchema.plugin(uniqueValidator, {message: 'Email already taken!'});
@@ -26,9 +29,6 @@ UserSchema.methods.validPassword = function(password) {
 };
 
 UserSchema.methods.setPassword = function(password){
-
-
-
     if (!password){
         var error = new ValidationError(this);
         error.errors.password = new ValidatorError({ message: "Password can't be blank!", name: 'ValidatorError'});
@@ -41,13 +41,37 @@ UserSchema.methods.setPassword = function(password){
 UserSchema.methods.generateJWT = function() {
     var today = new Date();
     var exp = new Date(today);
-    exp.setDate(today.getDate() + 60);
+    exp.setDate(today.getDate() + 60); //60 days
 
     return jwt.sign({
         id: this._id,
         name: this.name,
         exp: parseInt(exp.getTime() / 1000)
     }, secret);
+};
+
+UserSchema.methods.generateResetPasswordJWT = function() {
+
+    var today = new Date();
+    var exp = new Date(today);
+    exp.setDate(today.getDate() + 1); // one day
+    const secret = this.hash + '-' + this.createdAt.getTime();
+
+    const payload = {
+        id: this._id,
+        email: this.email,
+        exp: parseInt(exp.getTime() / 1000)
+    };
+
+    const token = jwt.sign(payload, secret);
+
+    return token;
+}
+
+UserSchema.methods.setResetPasswordToken = function() {
+
+    this.resetPasswordToken = crypto.randomBytes(3).toString('hex');
+    this.resetPasswordExpires = Date.now() + 3600000; // 1 hour
 };
 
 UserSchema.methods.toJSON = function(auth = false){

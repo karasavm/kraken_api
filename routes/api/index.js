@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
-
+var jwt = require('jsonwebtoken');
+var User = require('mongoose').model('User');
 
 router.get('/', function(req, res, next) {
     res.json({ title: 'Express' });

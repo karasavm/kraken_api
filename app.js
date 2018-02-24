@@ -8,9 +8,10 @@ var mongoose = require('mongoose');
 var errorhandler = require('errorhandler');
 var config = require('./config');
 var isProduction = process.env.NODE_ENV === 'production';
+var flash = require('express-flash');
 
 var app = express();
-
+// app.use(flash());
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -22,6 +23,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
 
 // Add headers
 app.use(function (req, res, next) {
