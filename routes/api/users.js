@@ -155,7 +155,7 @@ router.post('/reset/:token', function(req, res) {
             return res.redirect('/api/users/forgot/?id=3'); //token expired or is invalid
         }
 
-        user.password = req.body.password;
+        user.setPassword(req.body.password);
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
 
