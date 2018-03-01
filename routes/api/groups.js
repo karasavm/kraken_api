@@ -71,7 +71,7 @@ router.post('/', auth, function(req, res, next){
 });
 
 router.get('/:group', auth, permit, function(req, res, next){
-    console.log(req.group)
+    
     return res.json({group: req.group.toJSON()})
 });
 router.put('/:group',auth, permit, function(req, res, next){
@@ -83,7 +83,7 @@ router.put('/:group',auth, permit, function(req, res, next){
     }
     else {
         req.group.name = req.body.group.name;
-        console.log(req.group);
+        
         req.group.save().then(function(group){
             console.log("efweeee")
             return res.json({group: group.toJSON()})

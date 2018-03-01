@@ -11,6 +11,7 @@ var paymentSchema = new mongoose.Schema({
     amount: {
         type: Number,
         default: 0,
+        required: true,
         validate: {
             validator: function(v) {return v >= 0;},
             message: "can't be negative"
@@ -99,7 +100,20 @@ paymentSchema.methods.toJSON = function(){
 //todo: check member exists in group
 //todo: validate transaction type
 
+TransactionSchema.pre('save', function(next) {
+    
+    for (var i = 0 ; i < this.payments.length; i++) {
+    	if (this.payments[i].amount == null) {
+    		this.payments[i].amount = 0;
+    	}
 
+    	if (this.payments[i].debt == null) {
+    		this.payments[i].debt = -1;
+    	}
+    }
+
+    next();
+});
 
 
 mongoose.model('Transaction', TransactionSchema);
