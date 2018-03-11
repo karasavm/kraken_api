@@ -43,7 +43,8 @@ router.param('payment', function(req, res, next, payment){
 ///////////////////////////////////////////////////////////////////////////////////////
 router.get('/',auth, function(req, res, next){
 
-    Group.find({$or: [{creator: {_id: req.user.id} }, {users: {_id: req.user.id}}]})
+    // Group.find({$or: [{creator: {_id: req.user.id} }, {users: {_id: req.user.id}}]})
+    Group.find({$or: [{users: {_id: req.user.id}}]})
     // Group.find({})
         .populate('creator')
         .populate('users')
@@ -63,7 +64,7 @@ router.post('/', auth, function(req, res, next){
 
     group.name = req.body.group.name;
     group.creator = req.user;
-
+    group.pushUser(req.user);
     group.save().then(function(){
         return res.json({group: group.toJSON()})
     }).catch(next);

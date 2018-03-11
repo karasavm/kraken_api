@@ -47,7 +47,7 @@ groupSchema.methods.pushMember = function(name){
 
 groupSchema.methods.pushUser = function(user){
 
-    if (user._id.toString() === this.creator._id.toString()) {return true}
+    // if (user._id.toString() === this.creator._id.toString()) {return true}
     if (!this.users.some(function(u){ console.log(u); return user._id.toString() === u._id.toString()})){
         this.users.push(user);
         return true;
