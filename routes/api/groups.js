@@ -10,16 +10,19 @@ var permit = require('../middlewares').permit;
 router.param('group', function(req, res, next, groupId){
 
     Group.findById(groupId)
-       .populate('creator')
-       .populate('users')
-       .populate('transactions')
-       .then(function(group){
-           if (!group){return res.status(404).json({message: "Unknown group!"})}
-           req.group = group;
-           next();
-       }).catch(next)
+        .populate('creator')
+        .populate('users')
+        .populate('transactions')
+        .populate('members.user')
+        .then(function(group){
+            if (!group){return res.status(404).json({message: "Unknown group!"})}
+            req.group = group;
+            next();
+        }).catch(next)
 });
 router.param('member', function(req, res, next, member){
+    console.log(typeof member);
+    // console.log(req.group)
     var index = req.group.members.findIndex(function(memb){return memb._id.toString() === member});
     if (index == -1) return res.status(404).json({errors: {member: "doesn't exist"}});
 
@@ -44,18 +47,21 @@ router.param('payment', function(req, res, next, payment){
 router.get('/',auth, function(req, res, next){
 
     // Group.find({$or: [{creator: {_id: req.user.id} }, {users: {_id: req.user.id}}]})
-    Group.find({$or: [{users: {_id: req.user.id}}]})
+    Group.find({'members.user': {_id: req.user._id}})
+    // Group.find({_id: '5aae8949727f1726f05d531d'})
     // Group.find({})
         .populate('creator')
         .populate('users')
         .populate('transactions')
+        .populate('members.user')
         .then(function(groups){
             return res.json({groups: groups.map(function(group){
-                return group.toJSON()
-            })})
+                    return group.toJSON()
+                })})
         }).catch(next)
 
 });
+
 router.post('/', auth, function(req, res, next){
 
     if (!req.body.group){return res.status(400).json({errors: {group: 'object does not exist'}})}
@@ -64,7 +70,11 @@ router.post('/', auth, function(req, res, next){
 
     group.name = req.body.group.name;
     group.creator = req.user;
+
     group.pushUser(req.user);
+
+    group.pushMember(req.user.name, req.user);
+
     group.save().then(function(){
         return res.json({group: group.toJSON()})
     }).catch(next);
@@ -72,7 +82,7 @@ router.post('/', auth, function(req, res, next){
 });
 
 router.get('/:group', auth, permit, function(req, res, next){
-    
+
     return res.json({group: req.group.toJSON()})
 });
 router.put('/:group',auth, permit, function(req, res, next){
@@ -84,7 +94,7 @@ router.put('/:group',auth, permit, function(req, res, next){
     }
     else {
         req.group.name = req.body.group.name;
-        
+
         req.group.save().then(function(group){
             console.log("efweeee")
             return res.json({group: group.toJSON()})
@@ -101,47 +111,141 @@ router.delete('/:group',auth, permit, function(req, res, next){
 
     }).catch(next);
 });
-/////////////////////////////////////////////////////////////////////////////////////////
+/////////////-////////-----------------------MEMBERS-----------------//////////////////////////
 router.post('/:group/members', auth, permit, function(req, res, next){
     if (!req.body.member){return res.status(400).json({errors: {member: 'object does not exist'}})}
 
-    if (!req.body.member.name){return res.status(400).json({errors: {name: "can't be blank"}})}
+    if (!req.body.member.email){
+        if (!req.body.member.name) {
+            // neither email nor name found
+            return res.status(400).json({errors: {name: "or can't be blank", email: "or can't be blank"}})
+        } else {
+            // name found
+            if (req.group.pushMember(req.body.member.name)) {
+                req.group.save().then(function(group){
+                    return res.json({group: group.toJSON()});
+                }).catch(next);
+            }else {
+                return res.status(400).json({name: "member name in use"});
+            }
+        }
 
-    if (req.group.pushMember(req.body.member.name)) {
-        req.group.save().then(function(group){
-            return res.json({group: group.toJSON()});
+    } else {
+        // email found
+        User.findOne({email: req.body.member.email}).then(function(user){
+            if(!user){return res.status(400).json({errors: {email: "email does not exist"}})}
+
+            if (req.group.pushMember(user.name, user)) {
+                req.group.save().then(function(group){
+                    return res.json({group: req.group.toJSON()})
+                }).catch(next);
+            }else {
+                return res.status(400).json({email: "user with provided email already exists in group"})
+            }
+
         }).catch(next);
-    }else {
-        return res.status(400).json({name: "already taken"})
+
     }
+
+    // if (req.group.pushMember(req.body.member.name)) {
+    //     req.group.save().then(function(group){
+    //         return res.json({group: group.toJSON()});
+    //     }).catch(next);
+    // }else {
+    //     return res.status(400).json({name: "already taken"})
+    // }
 
 });
 router.put('/:group/members/:member',auth, permit, function(req, res, next){
     if (!req.body.member){return res.status(400).json({errors: {member: 'object does not exist'}})}
 
-    // check if member is in the list of members
-    //var index = req.group.members.findIndex(function(member){return member._id.toString() === req.params.member})
-    //if (index == -1) return res.status(404).json({errors: {member: "doesn't exist"}});
+    // if (!req.body.member.name) {
+    //     return res.status(400).json({errors: {name: 'member.name object does not exist'}});
+    // }
 
-    if (!req.body.member.name) {
-        return res.json({group: req.group.toJSON()});
+
+    if (typeof req.body.member.email !== 'undefined') {
+        // member.email found
+        // link to a user
+
+        if (req.body.member.email === '') {
+            // unlink a member user
+            // convert it to virtual
+
+            req.group.unlinkMember(req.memberIndex);
+
+
+            req.group.save().then(function (group) {
+                return res.json({group: req.group.toJSON()})
+            }).catch(next);
+
+        } else {
+            // email provided
+            // link member to user with provided email
+
+            // check if is notVirtual, already linked
+            if (req.group.members[req.memberIndex].user) {
+                return res.status(400).json({email: "member already linked"});
+            }
+
+
+            User.findOne({email: req.body.member.email}).then(function (user) {
+                if (!user) {
+                    return res.status(400).json({errors: {email: "email does not exist"}})
+                }
+
+                if (req.group.linkMember(req.memberIndex, user)) {
+                    req.group.save().then(function (group) {
+                        return res.json({group: req.group.toJSON()})
+                    }).catch(next);
+                } else {
+                    return res.status(400).json({email: "user with provided email exists to group"});
+                }
+
+            }).catch(next);
+        }
+
+    } else if (typeof req.body.member.name !== 'undefined') {
+        // member.email NOT found
+        // member.name found
+
+        // check if not a virtualMember
+        if (req.group.members[req.memberIndex].user) {
+            // linked member
+            return res.status(400).json({name: "not a virtual member"});
+        }
+        if (req.group.setMemberName(req.memberIndex, req.body.member.name)) {
+            //success
+            req.group.save().then(function (group) {
+                return res.json({group: group.toJSON()})
+            }).catch(next)
+        } else {
+
+            return res.status(400).json({name: "member name in use"});
+        }
+    } else {
+        // member.email NOT found
+        // member.name NOT found
+        return res.status(400).json({name: "member.name or member.email objects do not exist."})
+
     }
-    else {
-        req.group.members[req.memberIndex].name = req.body.member.name;
-        req.group.save().then(function(group){
-            return res.json({group: group.toJSON()})
-        }).catch(next)
-    }
+
+
+
+
+
 });
 router.delete('/:group/members/:member', auth, permit, function(req, res, next){
 
     var member = req.group.members[req.memberIndex];
 
 
-    var exists = req.group.transactions.findIndex(function(transaction){return transaction.memberIndex(member.id) != -1}) != -1;
+    var exists = req.group.transactions.findIndex(function(transaction){
+        return transaction.memberIndex(member.id) !== -1
+    }) !== -1;
 
     if (exists){
-        return res.status(400).json({errors: {"member": "is in use on a payment."}})
+        return res.status(400).json({errors: {"member": "is in use on transaction. can't delete"}})
     }
 
     req.group.members.splice(req.memberIndex, 1);
@@ -177,7 +281,7 @@ router.delete('/:group/users/:user',auth, permit, function(req, res, next){
     if (index == -1) return res.status(404).json({errors: {user: "doesn't exist"}});
 
     req.group.users.splice(index, 1); //remove
-   
+
     req.group.save().then(function(group){
 
         return res.json({group: group.toJSON()})
@@ -310,7 +414,7 @@ router.post('DEPRICATED/:group/transactions/:transaction/payments',auth, permit,
 
 });
 router.get('DEPRICATED/:group/transactions/:transaction/payments/:payment',auth, permit, function(req, res, next){
- return res.json({payment: req.group.transactions[req.transactionIndex].payments[req.paymentIndex]});
+    return res.json({payment: req.group.transactions[req.transactionIndex].payments[req.paymentIndex]});
 });
 router.put('DEPRICATED/:group/transactions/:transaction/payments/:payment',auth, permit, function(req, res, next){
 

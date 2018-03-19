@@ -48,7 +48,7 @@ app.use(function (req, res, next) {
 if (!isProduction) {
   app.use(errorhandler());
 }
-
+console.log(config.mongoUri)
 mongoose.connect(config.mongoUri);
 if(isProduction){
   mongoose.set('debug', true);

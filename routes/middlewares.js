@@ -55,6 +55,11 @@ exports.permit = function(req, res, next){
     if (req.user._id.toString() === req.group.creator._id.toString()) return next();
 
     if (req.group.users.some(function(user){return user._id.toString() === req.user._id.toString()})) return next();
+    if (req.group.members.some(function(member){
+        if (member.user && member.user._id.toString() === req.user._id.toString()) return true;
+        return false;
+        // return member.user._id.toString() === req.user._id.toString()
+    })) return next();
     res.status(403).json({errors: {group: "access isn't allowed"}})
 }
 
