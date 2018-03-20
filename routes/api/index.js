@@ -10,6 +10,7 @@ router.get('/', function(req, res, next) {
 
 router.use('/users', require('./users'));
 router.use('/groups', require('./groups'));
+router.use('/helper', require('./helper'));
 
 
 router.use(function(err, req, res, next){

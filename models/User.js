@@ -23,6 +23,9 @@ var UserSchema = new mongoose.Schema({
 
 UserSchema.plugin(uniqueValidator, {message: 'Email already taken!'});
 
+UserSchema.index({'name': 'text', 'email': 'text'});
+
+
 UserSchema.methods.validPassword = function(password) {
     var hash = crypto.pbkdf2Sync(password, this.salt, 10000, 512, 'sha512').toString('hex');
     return this.hash === hash;
@@ -89,7 +92,7 @@ UserSchema.methods.toJSON = function(auth = false){
     };
 };
 
-UserSchema.methods.toJSONonMembers = function(){
+UserSchema.methods.toJSONSimple = function(){
 
     return {
         id: this._id,

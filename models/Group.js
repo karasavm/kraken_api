@@ -19,7 +19,7 @@ memberSchema.methods.toJSON = function() {
     return {
         id: this._id,
         name: this.user ? this.user.name : this.name,
-        user: this.user ? this.user.toJSONonMembers() : this.user
+        user: this.user ? this.user.toJSONSimple() : this.user
         // user: {
         //     id: that.user._id,
         //     name: that.user.name,

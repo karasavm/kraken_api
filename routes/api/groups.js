@@ -230,10 +230,6 @@ router.put('/:group/members/:member',auth, permit, function(req, res, next){
 
     }
 
-
-
-
-
 });
 router.delete('/:group/members/:member', auth, permit, function(req, res, next){
 
@@ -448,8 +444,4 @@ router.delete('DEPRICATED/:group/transactions/:transaction/payments/:payment',au
 
 
 });
-////////////////////////////////////////////////////////////////
-
-
-
 module.exports = router;
