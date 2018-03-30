@@ -15,7 +15,7 @@ var groupSchema = new mongoose.Schema({
 
 memberSchema.methods.toJSON = function() {
     const that = this;
-    console.log(this)
+
     return {
         id: this._id,
         name: this.user ? this.user.name : this.name,
@@ -38,7 +38,7 @@ groupSchema.methods.toJSON = function() {
         updatedAt: this.updatedAt,
         users: this.users.map(function(user) {return user.toJSON()}),
         members: this.members.map(function(member){return member.toJSON()}),
-        transactions: this.transactions.map(function(trans){return trans.toJSON()})
+        transactions: this.transactions.map(function(trans){return trans.toJSON()}).reverse()
     }
 }
 

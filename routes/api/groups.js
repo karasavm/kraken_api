@@ -15,6 +15,7 @@ router.param('group', function(req, res, next, groupId){
         .populate('transactions')
         .populate('members.user')
         .then(function(group){
+
             if (!group){return res.status(404).json({message: "Unknown group!"})}
             req.group = group;
             next();
@@ -57,7 +58,7 @@ router.get('/',auth, function(req, res, next){
         .then(function(groups){
             return res.json({groups: groups.map(function(group){
                     return group.toJSON()
-                })})
+                }).reverse()})
         }).catch(next)
 
 });
@@ -444,4 +445,9 @@ router.delete('DEPRICATED/:group/transactions/:transaction/payments/:payment',au
 
 
 });
+
+
+
+
+
 module.exports = router;
